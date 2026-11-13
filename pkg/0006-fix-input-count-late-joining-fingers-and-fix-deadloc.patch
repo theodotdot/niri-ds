@@ -1,7 +1,7 @@
-From 7a5c6b05c2e1f79dd9a6c021b164339fddea75f2 Mon Sep 17 00:00:00 2001
+From be6b33b96ee7c2334df96e583ad3d8e39aa93f93 Mon Sep 17 00:00:00 2001
 From: GGEZUS <coelho.b.ricardo@gmail.com>
 Date: Thu, 20 Aug 2026 22:02:36 +0100
-Subject: [PATCH 06/20] fix(input): count late-joining fingers and fix deadlock
+Subject: [PATCH 06/31] fix(input): count late-joining fingers and fix deadlock
  in discrete swipes
 
 - Fingers landing between the recognition threshold arming (3rd finger
@@ -129,6 +129,3 @@ index 026e62c0..c26ab9f6 100644
              overview_scroll_swipe_gesture: ScrollSwipeGesture::new(),
              vertical_wheel_tracker: ScrollTracker::new(120),
              horizontal_wheel_tracker: ScrollTracker::new(120),
--- 
-2.55.0
-

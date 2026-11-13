@@ -1,7 +1,7 @@
-From ee62a17f39abe0ef1760c8fecf7233873267ec5c Mon Sep 17 00:00:00 2001
+From eb2fbf3de6c9c4ee4717adda4bb546a0a597c846 Mon Sep 17 00:00:00 2001
 From: Mario St Jr <mariostjr@noctalia.dev>
 Date: Sun, 29 Mar 2026 12:17:38 -0300
-Subject: [PATCH 03/20] docs: document touchscreen swipe gestures
+Subject: [PATCH 03/31] docs: document touchscreen swipe gestures
 
 Add touchscreen section to the Gestures wiki page and document the
 touchscreen-swipe configuration options.
@@ -74,6 +74,3 @@ index 5c94d71f..204438e3 100644
  ### All Pointing Devices
  
  #### Drag-and-Drop Edge View Scroll
--- 
-2.55.0
-

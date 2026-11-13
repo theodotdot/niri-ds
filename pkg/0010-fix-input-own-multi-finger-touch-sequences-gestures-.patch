@@ -1,7 +1,7 @@
-From 387c13de68d228780046654e884a6771f2041fc2 Mon Sep 17 00:00:00 2001
+From 650c259eff0e287c13c5f0cad607986d5021e5b6 Mon Sep 17 00:00:00 2001
 From: GGEZUS <coelho.b.ricardo@gmail.com>
 Date: Sat, 22 Aug 2026 22:04:35 +0100
-Subject: [PATCH 10/20] =?UTF-8?q?fix(input):=20own=20multi-finger=20touch?=
+Subject: [PATCH 10/31] =?UTF-8?q?fix(input):=20own=20multi-finger=20touch?=
  =?UTF-8?q?=20sequences=20=E2=80=94=20gestures=20stop=20leaking=20to=20app?=
  =?UTF-8?q?s?=
 MIME-Version: 1.0
@@ -354,6 +354,3 @@ index 72c6434f..1db3283c 100644
              overview_scroll_swipe_gesture: ScrollSwipeGesture::new(),
              vertical_wheel_tracker: ScrollTracker::new(120),
              horizontal_wheel_tracker: ScrollTracker::new(120),
--- 
-2.55.0
-

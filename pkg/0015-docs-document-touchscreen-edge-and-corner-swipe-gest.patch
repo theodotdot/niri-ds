@@ -1,7 +1,7 @@
-From 2843d174bea29fc799180658d8e6eb30fa73485e Mon Sep 17 00:00:00 2001
+From d7fbc76ed48115635d3a3c3e6d6baade15f8ff04 Mon Sep 17 00:00:00 2001
 From: GGEZUS <coelho.b.ricardo@gmail.com>
 Date: Mon, 7 Sep 2026 23:17:41 +0100
-Subject: [PATCH 15/20] docs: document touchscreen edge and corner swipe
+Subject: [PATCH 15/31] docs: document touchscreen edge and corner swipe
  gestures
 
 Add touchscreen-edge-swipe and touchscreen-corner-swipe sections to the
@@ -57,7 +57,7 @@ index 2d10729e..0d298feb 100644
 +fires. A second finger landing cancels the gesture.
 +
 +The zones follow the output the touch lands on, including its transform, so edges stay in
-+the visual orientation on rotated outputs and per-output on multi-monitor setups.
++the visual orientation on rotated tablets and per-output on multi-monitor setups.
 +
 +Zones left unbound are inert. Avoid binding edges occupied by swipe-driven shell surfaces
 +(e.g. a pull-down notification panel along the top): the bound gesture would fire mid-drag.
@@ -132,6 +132,3 @@ index 204438e3..4655a856 100644
  ### All Pointing Devices
  
  #### Drag-and-Drop Edge View Scroll
--- 
-2.55.0
-

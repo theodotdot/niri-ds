@@ -1,7 +1,7 @@
-From 32c2a38e4b72905cab25d2ceee13e806a47f2fc8 Mon Sep 17 00:00:00 2001
+From f3666712d6245d5d7df1e2932ff994b6d54cacf0 Mon Sep 17 00:00:00 2001
 From: GGEZUS <coelho.b.ricardo@gmail.com>
 Date: Thu, 20 Aug 2026 18:05:36 +0100
-Subject: [PATCH 04/20] feat(input): touchscreen tap and bottom-edge swipe
+Subject: [PATCH 04/31] feat(input): touchscreen tap and bottom-edge swipe
  gestures
 
 Extend the touchscreen swipe patchset:
@@ -965,6 +965,3 @@ index 3a9f9c53..026e62c0 100644
              overview_scroll_swipe_gesture: ScrollSwipeGesture::new(),
              vertical_wheel_tracker: ScrollTracker::new(120),
              horizontal_wheel_tracker: ScrollTracker::new(120),
--- 
-2.55.0
-

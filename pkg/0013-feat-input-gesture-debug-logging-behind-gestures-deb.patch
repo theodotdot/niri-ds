@@ -1,7 +1,7 @@
-From 3244c12ac85f8a4b34a7136076ca3aee2d30ce6a Mon Sep 17 00:00:00 2001
+From 8031e27fc4111af21d7155f3c95382d22a881a39 Mon Sep 17 00:00:00 2001
 From: GGEZUS <coelho.b.ricardo@gmail.com>
 Date: Mon, 7 Sep 2026 20:20:11 +0100
-Subject: [PATCH 13/20] feat(input): gesture debug logging behind gestures
+Subject: [PATCH 13/31] feat(input): gesture debug logging behind gestures
  debug-log
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -706,6 +706,3 @@ index 1db3283c..6dc14a58 100644
              ),
              touch_edge_swipe_tracker: crate::input::touch_edge_swipe::EdgeSwipeTracker::default(),
              pending_touch_action: None,
--- 
-2.55.0
-

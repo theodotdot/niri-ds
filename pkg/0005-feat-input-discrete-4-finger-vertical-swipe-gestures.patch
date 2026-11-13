@@ -1,14 +1,14 @@
-From 3ce8f7bb730c1d5cb1f2684fc21acbdb4a599009 Mon Sep 17 00:00:00 2001
+From 6e5f4bd44c4d5e84a652b4d7c58c3300526ac9a2 Mon Sep 17 00:00:00 2001
 From: GGEZUS <coelho.b.ricardo@gmail.com>
 Date: Thu, 20 Aug 2026 20:32:20 +0100
-Subject: [PATCH 05/20] feat(input): discrete 4-finger vertical swipe gestures
+Subject: [PATCH 05/31] feat(input): discrete 4-finger vertical swipe gestures
 
 A vertical swipe recognized with four or more fingers now runs a
 configurable action instead of driving the workspace carousel:
 
     touchscreen-swipe {
         swipe-4-down { close-window; }
-        swipe-4-up   { spawn-sh "plasma-keyboard-custom"; }
+        swipe-4-up   { spawn-sh "wvkbd-deskintl -H 260"; }
     }
 
 The action fires when the fingers lift; the grab swallows events for
@@ -349,6 +349,3 @@ index abcf70cd..c18a2821 100644
              timestamp,
          })
      }
--- 
-2.55.0
-

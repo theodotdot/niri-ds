@@ -1,7 +1,7 @@
-From ef77de001a487749159fcc040dbdcf7b88039158 Mon Sep 17 00:00:00 2001
+From 94359735bd315744a0b74351b8830215ea77ee48 Mon Sep 17 00:00:00 2001
 From: GGEZUS <coelho.b.ricardo@gmail.com>
 Date: Wed, 23 Sep 2026 01:58:18 +0100
-Subject: [PATCH 20/20] feat(gestures): swipe-more-left/right for extra-finger
+Subject: [PATCH 20/31] feat(gestures): swipe-more-left/right for extra-finger
  flicks
 
 Quick horizontal swipes with one finger more than touchscreen-swipe.fingers
@@ -169,6 +169,3 @@ index 467b94f2..599ed70c 100644
                                      }
                                  } else {
                                      None
--- 
-2.55.0
-

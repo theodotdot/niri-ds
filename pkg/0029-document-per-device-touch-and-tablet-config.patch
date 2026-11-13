@@ -1,0 +1,59 @@
+From 9b32ab2326dbfbf5ae264e534810ac3b63e8f649 Mon Sep 17 00:00:00 2001
+From: Stefan Boca <stefan.r.boca@gmail.com>
+Date: Thu, 23 Oct 2025 22:58:06 -0700
+Subject: [PATCH 29/31] document per-device touch and tablet config
+
+---
+ docs/wiki/Configuration:-Input.md | 32 ++++++++++++++++++++++++++++++-
+ 1 file changed, 31 insertions(+), 1 deletion(-)
+
+diff --git a/docs/wiki/Configuration:-Input.md b/docs/wiki/Configuration:-Input.md
+index 62f70b5a..413e9e4f 100644
+--- a/docs/wiki/Configuration:-Input.md
++++ b/docs/wiki/Configuration:-Input.md
+@@ -4,7 +4,8 @@ In this section you can configure input devices like keyboard and mouse, and som
+ 
+ There's a section for each device type: `keyboard`, `touchpad`, `mouse`, `trackpoint`, `trackball`, `tablet`, `touch`.
+ Settings in those sections will apply to every device of that type.
+-Currently, there's no way to configure specific devices individually (but that is planned).
++Currently, there's no way to configure specific `keyboard`, `touchpad`, `mouse`, or `trackpoint` devices
++individually (but that is planned).
+ 
+ All settings at a glance:
+ 
+@@ -286,6 +287,35 @@ Setting specific to `tablet`:
+ 
+ - `map-to-focused-output`: <sup>Since: 26.04</sup> will map the tablet to the focused output, takes precedence over `map-to-output`.
+ 
++> [!TIP]
++>
++> <sup>Since: next release</sup>
++>
++> It is possible to configure specific `tablet` and `touch` devices by name.
++>
++> Any non‑device‑specific settings will apply as a fallback when no matching device‑specific block exists:
++>
++> ```kdl
++> input {
++>     tablet {
++>         map-to-output "eDP-1";
++>     }
++>
++>     // Map this specific tablet to a different output.
++>     tablet "ELAN9009:00 04F3:2F2A Stylus" {
++>         map-to-output "DP-1";
++>     }
++>
++>     // Map this specific touchscreen to DP-1.
++>     touch "ELAN9009:00 04F3:2F2A" {
++>         map-to-output "DP-1";
++>     }
++> }
++> ```
++>
++> The device name is case-insensitive.
++> Device names are taken from libinput; you can find them by running `sudo libinput list-devices` or `sudo libinput debug-events`.
++
+ ### General Settings
+ 
+ These settings are not specific to a particular input device.

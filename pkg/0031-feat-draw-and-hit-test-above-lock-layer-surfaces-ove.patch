@@ -1,0 +1,251 @@
+From 52b33d994c028aafbca36fdcf8e79293f9842b3b Mon Sep 17 00:00:00 2001
+From: theodotdot <59372255+theodotdot@users.noreply.github.com>
+Date: Thu, 12 Nov 2026 21:02:42 +0100
+Subject: [PATCH 31/31] feat: draw and hit-test above-lock layer surfaces over
+ the session lock
+
+While the session is locked, niri renders only the lock surface and routes
+input only to it, so a layer-shell on-screen keyboard is neither visible nor
+clickable. On a handheld without a hardware keyboard that leaves the session
+impossible to unlock.
+
+Add a layer rule, above-lock true: matched surfaces are drawn over the lock
+surface and take pointer/touch input before it. It is opt-in and off by
+default, so nothing changes without a config asking for it; layer-shell
+popups of such surfaces are not drawn above the lock screen.
+---
+ docs/wiki/Configuration:-Layer-Rules.md | 22 +++++++
+ niri-config/src/layer_rule.rs           |  2 +
+ niri-config/src/lib.rs                  |  4 ++
+ src/layer/mapped.rs                     |  5 ++
+ src/layer/mod.rs                        |  6 ++
+ src/niri.rs                             | 80 +++++++++++++++++++++++++
+ 6 files changed, 119 insertions(+)
+
+diff --git a/docs/wiki/Configuration:-Layer-Rules.md b/docs/wiki/Configuration:-Layer-Rules.md
+index 0b2ccf34..4ad1e33b 100644
+--- a/docs/wiki/Configuration:-Layer-Rules.md
++++ b/docs/wiki/Configuration:-Layer-Rules.md
+@@ -34,6 +34,7 @@ layer-rule {
+ 
+     geometry-corner-radius 12
+     place-within-backdrop true
++    above-lock true
+     baba-is-float true
+ 
+     background-effect {
+@@ -211,6 +212,27 @@ layer-rule {
+ }
+ ```
+ 
++#### `above-lock`
++
++<sup>Since: 26.04</sup>
++
++Set to `true` to keep the surface drawn *over* the session lock screen, and to keep it receiving pointer and touch input there.
++
++This exists for on-screen keyboards: without it, nothing but the lock screen itself is visible or clickable while the session is locked, so a device with no hardware keyboard cannot be unlocked.
++The surface is drawn above the lock surface regardless of the layer it asked for.
++
++Only layer surfaces matched by a rule with `above-lock true` are drawn and hit-tested over the lock screen; every other surface, including layer-shell popups, stays hidden.
++Anything drawn over a lock screen can imitate a password prompt, so only trusted clients (in practice: the keyboard) should be given this.
++
++```kdl
++// Keep the on-screen keyboard usable while the session is locked.
++layer-rule {
++    match namespace="^plasma-keyboard$"
++
++    above-lock true
++}
++```
++
+ #### `baba-is-float`
+ 
+ <sup>Since: 25.05</sup>
+diff --git a/niri-config/src/layer_rule.rs b/niri-config/src/layer_rule.rs
+index cf099b3a..d5a9f5f5 100644
+--- a/niri-config/src/layer_rule.rs
++++ b/niri-config/src/layer_rule.rs
+@@ -20,6 +20,8 @@ pub struct LayerRule {
+     #[knuffel(child, unwrap(argument))]
+     pub place_within_backdrop: Option<bool>,
+     #[knuffel(child, unwrap(argument))]
++    pub above_lock: Option<bool>,
++    #[knuffel(child, unwrap(argument))]
+     pub baba_is_float: Option<bool>,
+     #[knuffel(child, default)]
+     pub background_effect: BackgroundEffectRule,
+diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
+index 1988150a..c50501ac 100644
+--- a/niri-config/src/lib.rs
++++ b/niri-config/src/lib.rs
+@@ -1064,6 +1064,7 @@ mod tests {
+             layer-rule {
+                 match namespace="^notifications$"
+                 block-out-from "screencast"
++                above-lock true
+             }
+ 
+             binds {
+@@ -2127,6 +2128,9 @@ mod tests {
+                     },
+                     geometry_corner_radius: None,
+                     place_within_backdrop: None,
++                    above_lock: Some(
++                        true,
++                    ),
+                     baba_is_float: None,
+                     background_effect: BackgroundEffectRule {
+                         xray: None,
+diff --git a/src/layer/mapped.rs b/src/layer/mapped.rs
+index fbaa6fc6..f31d8db0 100644
+--- a/src/layer/mapped.rs
++++ b/src/layer/mapped.rs
+@@ -174,6 +174,11 @@ impl MappedLayer {
+         true
+     }
+ 
++    /// Whether this layer surface should be drawn over the session lock screen.
++    pub fn above_lock(&self) -> bool {
++        self.rules.above_lock
++    }
++
+     pub fn bob_offset(&self) -> Point<f64, Logical> {
+         if !self.rules.baba_is_float {
+             return Point::from((0., 0.));
+diff --git a/src/layer/mod.rs b/src/layer/mod.rs
+index 767a6b0e..cc39a8e4 100644
+--- a/src/layer/mod.rs
++++ b/src/layer/mod.rs
+@@ -25,6 +25,9 @@ pub struct ResolvedLayerRules {
+     /// Whether to place this layer surface within the overview backdrop.
+     pub place_within_backdrop: bool,
+ 
++    /// Whether to draw this layer surface over the session lock screen.
++    pub above_lock: bool,
++
+     /// Whether to bob this window up and down.
+     pub baba_is_float: bool,
+ 
+@@ -72,6 +75,9 @@ impl ResolvedLayerRules {
+             if let Some(x) = rule.place_within_backdrop {
+                 resolved.place_within_backdrop = x;
+             }
++            if let Some(x) = rule.above_lock {
++                resolved.above_lock = x;
++            }
+             if let Some(x) = rule.baba_is_float {
+                 resolved.baba_is_float = x;
+             }
+diff --git a/src/niri.rs b/src/niri.rs
+index 75ba857e..de22b45a 100644
+--- a/src/niri.rs
++++ b/src/niri.rs
+@@ -3316,6 +3316,15 @@ impl Niri {
+         if self.exit_confirm_dialog.is_open() {
+             return rv;
+         } else if self.is_locked() {
++            // Above-lock layer surfaces, e.g. an on-screen keyboard, take input before the lock
++            // surface. The order matches render() so that input is consistent with the visuals.
++            let above_lock = self.above_lock_layer_under(output, pos_within_output);
++            if let Some((surface, loc, layer)) = above_lock {
++                rv.surface = Some((surface, loc + output_pos_in_global_space.to_f64()));
++                rv.layer = Some(layer);
++                return rv;
++            }
++
+             let Some(state) = self.output_state.get(output) else {
+                 return rv;
+             };
+@@ -3478,6 +3487,47 @@ impl Niri {
+         rv
+     }
+ 
++    /// Returns the above-lock layer surface under the point, if any.
++    ///
++    /// Above-lock surfaces are the ones that render over the session lock screen, so they have
++    /// to take input there too. The ordering must match [`Self::render_layers_above_lock`].
++    fn above_lock_layer_under(
++        &self,
++        output: &Output,
++        pos_within_output: Point<f64, Logical>,
++    ) -> Option<(WlSurface, Point<f64, Logical>, LayerSurface)> {
++        let layers = layer_map_for_output(output);
++
++        for layer in [Layer::Overlay, Layer::Top, Layer::Bottom, Layer::Background] {
++            for layer_surface in layers.layers_on(layer).rev() {
++                let Some(mapped) = self.mapped_layer_surfaces.get(layer_surface) else {
++                    continue;
++                };
++
++                // Matches the render filter: above-lock surfaces never sit in the backdrop.
++                if !mapped.above_lock() || mapped.place_within_backdrop() {
++                    continue;
++                }
++
++                let Some(geo) = layers.layer_geometry(layer_surface) else {
++                    continue;
++                };
++
++                let layer_loc = geo.loc.to_f64() + mapped.bob_offset();
++                let surface_type = WindowSurfaceType::TOPLEVEL | WindowSurfaceType::SUBSURFACE;
++                let Some((surface, loc)) =
++                    layer_surface.surface_under(pos_within_output - layer_loc, surface_type)
++                else {
++                    continue;
++                };
++
++                return Some((surface, loc.to_f64() + layer_loc, layer_surface.clone()));
++            }
++        }
++
++        None
++    }
++
+     pub fn output_under_cursor(&self) -> Option<Output> {
+         let pos = self.seat.get_pointer().unwrap().current_location();
+         self.global_space.output_under(pos).next().cloned()
+@@ -4269,6 +4319,13 @@ impl Niri {
+ 
+         // If the session is locked, draw the lock surface.
+         if self.is_locked() {
++            // Layer surfaces with the above-lock rule go first so that they end up on top of the
++            // lock surface. An on-screen keyboard needs this to be usable while locked.
++            {
++                let layer_map = layer_map_for_output(output);
++                self.render_layers_above_lock(ctx.r(), &layer_map, &mut |elem| push(elem.into()));
++            }
++
+             if let Some(surface) = state.lock_surface.as_ref() {
+                 push_elements_from_surface_tree(
+                     ctx.renderer,
+@@ -4613,6 +4670,29 @@ impl Niri {
+         }
+     }
+ 
++    /// Renders the layer surfaces marked with the `above-lock` rule over the session lock screen.
++    ///
++    /// Elements are pushed top-first, like everywhere else in render(), so the overlay layer ends
++    /// up above the lock surface. Popups are not drawn: an above-lock client that needs them has
++    /// to draw its own.
++    fn render_layers_above_lock<R: NiriRenderer>(
++        &self,
++        mut ctx: RenderCtx<R>,
++        layer_map: &LayerMap,
++        push: &mut dyn FnMut(LayerSurfaceRenderElement<R>),
++    ) {
++        for layer in [Layer::Overlay, Layer::Top, Layer::Bottom, Layer::Background] {
++            for (mapped, geo) in self.layers_in_render_order(layer_map, layer, false) {
++                if !mapped.above_lock() {
++                    continue;
++                }
++
++                let loc = geo.loc.to_f64();
++                mapped.render_normal(ctx.r(), None, loc, XrayPos::default(), push);
++            }
++        }
++    }
++
+     fn redraw(&mut self, backend: &mut Backend, output: &Output) {
+         let _span = tracy_client::span!("Niri::redraw");
+ 

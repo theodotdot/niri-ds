@@ -1,0 +1,91 @@
+From 01886562fe3f45875967eef40cead099734a3add Mon Sep 17 00:00:00 2001
+From: Stefan Boca <stefan.r.boca@gmail.com>
+Date: Thu, 23 Oct 2025 22:23:56 -0700
+Subject: [PATCH 22/31] add DeviceData for caching device name
+
+---
+ src/handlers/mod.rs | 2 +-
+ src/input/mod.rs    | 9 ++++++++-
+ src/niri.rs         | 8 ++++----
+ 3 files changed, 13 insertions(+), 6 deletions(-)
+
+diff --git a/src/handlers/mod.rs b/src/handlers/mod.rs
+index 3532078b..e2367c73 100644
+--- a/src/handlers/mod.rs
++++ b/src/handlers/mod.rs
+@@ -129,7 +129,7 @@ impl SeatHandler for State {
+         let keyboards = self
+             .niri
+             .devices
+-            .iter()
++            .keys()
+             .filter(|device| device.has_capability(input::DeviceCapability::Keyboard))
+             .cloned();
+ 
+diff --git a/src/input/mod.rs b/src/input/mod.rs
+index ba58203e..c767d042 100644
+--- a/src/input/mod.rs
++++ b/src/input/mod.rs
+@@ -79,6 +79,11 @@ use backend_ext::{NiriInputBackend as InputBackend, NiriInputDevice as _};
+ 
+ pub const DOUBLE_CLICK_TIME: Duration = Duration::from_millis(400);
+ 
++#[derive(Debug, Clone, PartialEq)]
++pub struct DeviceData {
++    pub name: String,
++}
++
+ #[derive(Debug, Clone, Copy, PartialEq)]
+ pub struct TabletData {
+     pub aspect_ratio: f64,
+@@ -208,7 +213,9 @@ impl State {
+ 
+         match event {
+             InputEvent::DeviceAdded { device } => {
+-                self.niri.devices.insert(device.clone());
++                let name = device.name().to_string();
++                let data = DeviceData { name };
++                self.niri.devices.insert(device.clone(), data);
+ 
+                 if device.has_capability(input::DeviceCapability::TabletTool) {
+                     match device.size() {
+diff --git a/src/niri.rs b/src/niri.rs
+index 6dc14a58..72a00228 100644
+--- a/src/niri.rs
++++ b/src/niri.rs
+@@ -133,7 +133,7 @@ use crate::input::scroll_swipe_gesture::ScrollSwipeGesture;
+ use crate::input::scroll_tracker::ScrollTracker;
+ use crate::input::{
+     apply_libinput_settings, mods_with_finger_scroll_binds, mods_with_mouse_binds,
+-    mods_with_wheel_binds, TabletData,
++    mods_with_wheel_binds, DeviceData, TabletData,
+ };
+ use crate::ipc::server::IpcServer;
+ use crate::layer::mapped::LayerSurfaceRenderElement;
+@@ -267,7 +267,7 @@ pub struct Niri {
+     /// startup, libinput will immediately send a closed event.
+     pub is_lid_closed: bool,
+ 
+-    pub devices: HashSet<input::Device>,
++    pub devices: HashMap<input::Device, DeviceData>,
+     pub tablets: HashMap<input::Device, TabletData>,
+     pub touch: HashSet<input::Device>,
+ 
+@@ -1656,7 +1656,7 @@ impl State {
+ 
+         if libinput_config_changed {
+             let config = self.niri.config.borrow();
+-            for mut device in self.niri.devices.iter().cloned() {
++            for mut device in self.niri.devices.keys().cloned() {
+                 apply_libinput_settings(&config.input, &mut device);
+             }
+         }
+@@ -2524,7 +2524,7 @@ impl Niri {
+             monitors_active: true,
+             is_lid_closed: false,
+ 
+-            devices: HashSet::new(),
++            devices: HashMap::new(),
+             tablets: HashMap::new(),
+             touch: HashSet::new(),
+ 

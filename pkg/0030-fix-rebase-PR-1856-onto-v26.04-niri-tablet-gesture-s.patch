@@ -1,0 +1,94 @@
+From a6a2edbaa2dedaa9d5d91905513f43123a96db99 Mon Sep 17 00:00:00 2001
+From: thor-rebase <thor@localhost>
+Date: Tue, 10 Nov 2026 21:32:49 +0100
+Subject: [PATCH 30/31] fix: rebase PR 1856 onto v26.04 + niri-tablet gesture
+ series
+
+Resolutions required to land the per-device touch/tablet config on top of
+the gesture stack and the v26.04 base:
+
+- Tablet/Tablets keep upstream's map-to-focused-output: honour it in
+  output_for_tablet() alongside the new name-keyed lookup, and carry the
+  field in the default Tablet literal and the parse snapshot.
+- DEFAULT_TABLET becomes a static: a const with a Vec field cannot be
+  returned by Tablets::find().
+- libinput::device.name() now yields Cow<str>; deref it at the
+  tablets/touch_screens lookup sites.
+- Keep upstream's output_exists() guard in compute_tablet_position while
+  binding the device once (PR 1856's change).
+- Keep sync_touch_debug_log() ahead of the 'static-bounded
+  on_touch_down().
+---
+ niri-config/src/input.rs | 14 ++++++++++++--
+ src/input/mod.rs         |  4 ++--
+ 2 files changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/niri-config/src/input.rs b/niri-config/src/input.rs
+index 760a1c08..21fa2619 100644
+--- a/niri-config/src/input.rs
++++ b/niri-config/src/input.rs
+@@ -368,16 +368,24 @@ pub struct Tablet {
+     pub left_handed: bool,
+ }
+ 
+-const DEFAULT_TABLET: Tablet = Tablet {
++static DEFAULT_TABLET: Tablet = Tablet {
+     name: None,
+     off: false,
+     calibration_matrix: None,
+     map_to_output: None,
++    map_to_focused_output: false,
+     left_handed: false,
+ };
+ impl Default for Tablet {
+     fn default() -> Self {
+-        DEFAULT_TABLET
++        Tablet {
++            name: None,
++            off: false,
++            calibration_matrix: None,
++            map_to_output: None,
++            map_to_focused_output: false,
++            left_handed: false,
++        }
+     }
+ }
+ 
+@@ -803,6 +811,7 @@ mod tests {
+                     map_to_output: Some(
+                         "eDP-1",
+                     ),
++                    map_to_focused_output: false,
+                     left_handed: false,
+                 },
+                 Tablet {
+@@ -814,6 +823,7 @@ mod tests {
+                     map_to_output: Some(
+                         "DP-1",
+                     ),
++                    map_to_focused_output: false,
+                     left_handed: false,
+                 },
+             ],
+diff --git a/src/input/mod.rs b/src/input/mod.rs
+index a2b1591b..c4aed664 100644
+--- a/src/input/mod.rs
++++ b/src/input/mod.rs
+@@ -5546,7 +5546,7 @@ pub fn apply_libinput_settings(config: &niri_config::Input, device: &mut input::
+ 
+     let is_tablet = device.has_capability(input::DeviceCapability::TabletTool);
+     if is_tablet {
+-        let c = config.tablets.find(Some(device.name()));
++        let c = config.tablets.find(Some(device.name().as_ref()));
+         let _ = device.config_send_events_set_mode(if c.off {
+             input::SendEventsMode::DISABLED
+         } else {
+@@ -5572,7 +5572,7 @@ pub fn apply_libinput_settings(config: &niri_config::Input, device: &mut input::
+ 
+     let is_touch = device.has_capability(input::DeviceCapability::Touch);
+     if is_touch {
+-        let c = config.touch_screens.find(Some(device.name()));
++        let c = config.touch_screens.find(Some(device.name().as_ref()));
+         let _ = device.config_send_events_set_mode(if c.off {
+             input::SendEventsMode::DISABLED
+         } else {

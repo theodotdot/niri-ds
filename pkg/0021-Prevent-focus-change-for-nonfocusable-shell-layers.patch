@@ -1,0 +1,36 @@
+From 46b8c24b74a41c02556957e9df2a5c6a83516e0d Mon Sep 17 00:00:00 2001
+From: c4ashley <ashley.pdtn85@gmail.com>
+Date: Fri, 5 Jun 2026 02:07:44 +0930
+Subject: [PATCH 21/31] Prevent focus change for nonfocusable shell layers
+
+If the user touches or clicks on a shell layer, the default monitor
+focus pathway is blocked, so the active monitor doesn't lose focus when
+it's not expected to.
+---
+ src/input/mod.rs | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/input/mod.rs b/src/input/mod.rs
+index 599ed70c..ba58203e 100644
+--- a/src/input/mod.rs
++++ b/src/input/mod.rs
+@@ -3051,6 +3051,9 @@ impl State {
+ 
+                 // FIXME: granular.
+                 self.niri.queue_redraw_all();
++            } else if self.niri.pointer_contents.layer.is_some() {
++                // do nothing; shell layers shouldn't refocus the monitor,
++                // in case the shell layer is a virtual input source
+             } else if let Some(output) = self.niri.output_under_cursor() {
+                 self.niri.layout.focus_output(&output);
+ 
+@@ -4342,6 +4345,9 @@ impl State {
+ 
+                 // FIXME: granular.
+                 self.niri.queue_redraw_all();
++            } else if under.layer.is_some() {
++                // do nothing; shell layers shouldn't refocus the monitor,
++                // in case the shell layer is a virtual input source
+             } else if let Some(output) = under.output {
+                 self.niri.layout.focus_output(&output);
+ 

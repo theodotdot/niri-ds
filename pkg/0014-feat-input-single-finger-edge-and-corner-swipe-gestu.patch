@@ -1,7 +1,7 @@
-From a38d4054233d7092c0f39b3ba1435eefd11ca86d Mon Sep 17 00:00:00 2001
+From f0f3319d06a6f7196caa28820c592110198fa518 Mon Sep 17 00:00:00 2001
 From: GGEZUS <coelho.b.ricardo@gmail.com>
 Date: Mon, 7 Sep 2026 23:17:11 +0100
-Subject: [PATCH 14/20] feat(input): single-finger edge and corner swipe
+Subject: [PATCH 14/31] feat(input): single-finger edge and corner swipe
  gestures
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1036,6 +1036,3 @@ index 800ee3d5..394eae3b 100644
 +        );
      }
  }
--- 
-2.55.0
-

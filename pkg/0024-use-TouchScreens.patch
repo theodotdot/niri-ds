@@ -1,0 +1,176 @@
+From 39ff90525ddf07b5932ea847616feca4d016c6c0 Mon Sep 17 00:00:00 2001
+From: Stefan Boca <stefan.r.boca@gmail.com>
+Date: Thu, 23 Oct 2025 22:12:14 -0700
+Subject: [PATCH 24/31] use TouchScreens
+
+---
+ niri-config/src/input.rs | 20 ++++++++------------
+ niri-config/src/lib.rs   | 19 ++++++++++++-------
+ src/input/mod.rs         | 25 ++++++++++++++++++++-----
+ src/niri.rs              |  6 +++---
+ 4 files changed, 43 insertions(+), 27 deletions(-)
+
+diff --git a/niri-config/src/input.rs b/niri-config/src/input.rs
+index e6242a09..739388ef 100644
+--- a/niri-config/src/input.rs
++++ b/niri-config/src/input.rs
+@@ -16,7 +16,7 @@ pub struct Input {
+     pub trackpoint: Trackpoint,
+     pub trackball: Trackball,
+     pub tablet: Tablet,
+-    pub touch: Touch,
++    pub touch_screens: TouchScreens,
+     pub disable_power_key_handling: bool,
+     pub warp_mouse_to_focus: Option<WarpMouseToFocus>,
+     pub focus_follows_mouse: Option<FocusFollowsMouse>,
+@@ -39,8 +39,8 @@ pub struct InputPart {
+     pub trackball: Option<Trackball>,
+     #[knuffel(child)]
+     pub tablet: Option<Tablet>,
+-    #[knuffel(child)]
+-    pub touch: Option<Touch>,
++    #[knuffel(children(name = "touch"))]
++    pub touch_screens: TouchScreens,
+     #[knuffel(child)]
+     pub disable_power_key_handling: Option<Flag>,
+     #[knuffel(child)]
+@@ -64,15 +64,7 @@ impl MergeWith<InputPart> for Input {
+             workspace_auto_back_and_forth,
+         );
+ 
+-        merge_clone!(
+-            (self, part),
+-            touchpad,
+-            mouse,
+-            trackpoint,
+-            trackball,
+-            tablet,
+-            touch,
+-        );
++        merge_clone!((self, part), touchpad, mouse, trackpoint, trackball, tablet);
+ 
+         merge_clone_opt!(
+             (self, part),
+@@ -81,6 +73,10 @@ impl MergeWith<InputPart> for Input {
+             mod_key,
+             mod_key_nested,
+         );
++
++        self.touch_screens
++            .0
++            .extend(part.touch_screens.0.iter().cloned());
+     }
+ }
+ 
+diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
+index 17faf06d..3a528d94 100644
+--- a/niri-config/src/lib.rs
++++ b/niri-config/src/lib.rs
+@@ -1271,13 +1271,18 @@ mod tests {
+                     map_to_focused_output: true,
+                     left_handed: false,
+                 },
+-                touch: Touch {
+-                    off: false,
+-                    calibration_matrix: None,
+-                    map_to_output: Some(
+-                        "eDP-1",
+-                    ),
+-                },
++                touch_screens: TouchScreens(
++                    [
++                        Touch {
++                            name: None,
++                            off: false,
++                            calibration_matrix: None,
++                            map_to_output: Some(
++                                "eDP-1",
++                            ),
++                        },
++                    ],
++                ),
+                 disable_power_key_handling: true,
+                 warp_mouse_to_focus: Some(
+                     WarpMouseToFocus {
+diff --git a/src/input/mod.rs b/src/input/mod.rs
+index c767d042..aa17a796 100644
+--- a/src/input/mod.rs
++++ b/src/input/mod.rs
+@@ -4114,8 +4114,17 @@ impl State {
+     fn compute_touch_location<I: InputBackend>(
+         &self,
+         evt: &impl AbsolutePositionEvent<I>,
+-    ) -> Option<Point<f64, Logical>> {
+-        self.compute_absolute_location(evt, self.niri.output_for_touch())
++    ) -> Option<Point<f64, Logical>>
++    where
++        I::Device: 'static,
++    {
++        let data = (&evt.device() as &dyn Any)
++            .downcast_ref::<input::Device>()
++            .and_then(|device| self.niri.devices.get(device));
++        self.compute_absolute_location(
++            evt,
++            self.niri.output_for_touch(data.map(|d| d.name.as_str())),
++        )
+     }
+ 
+     /// Refresh the touch tracker's debug flag from the live config
+@@ -4126,7 +4135,10 @@ impl State {
+         self.niri.touch_swipe_tracker.set_debug_log(debug_log);
+     }
+ 
+-    fn on_touch_down<I: InputBackend>(&mut self, evt: I::TouchDownEvent) {
++    fn on_touch_down<I: InputBackend>(&mut self, evt: I::TouchDownEvent)
++    where
++        I::Device: 'static,
++    {
+         let Some(handle) = self.niri.seat.get_touch() else {
+             return;
+         };
+@@ -4477,7 +4489,10 @@ impl State {
+             self.do_action(action, false);
+         }
+     }
+-    fn on_touch_motion<I: InputBackend>(&mut self, evt: I::TouchMotionEvent) {
++    fn on_touch_motion<I: InputBackend>(&mut self, evt: I::TouchMotionEvent)
++    where
++        I::Device: 'static,
++    {
+         let Some(handle) = self.niri.seat.get_touch() else {
+             return;
+         };
+@@ -5552,7 +5567,7 @@ pub fn apply_libinput_settings(config: &niri_config::Input, device: &mut input::
+ 
+     let is_touch = device.has_capability(input::DeviceCapability::Touch);
+     if is_touch {
+-        let c = &config.touch;
++        let c = config.touch_screens.find(Some(device.name()));
+         let _ = device.config_send_events_set_mode(if c.off {
+             input::SendEventsMode::DISABLED
+         } else {
+diff --git a/src/niri.rs b/src/niri.rs
+index 72a00228..82b19fdf 100644
+--- a/src/niri.rs
++++ b/src/niri.rs
+@@ -1518,7 +1518,7 @@ impl State {
+             || config.input.trackball != old_config.input.trackball
+             || config.input.trackpoint != old_config.input.trackpoint
+             || config.input.tablet != old_config.input.tablet
+-            || config.input.touch != old_config.input.touch
++            || config.input.touch_screens != old_config.input.touch_screens
+         {
+             libinput_config_changed = true;
+         }
+@@ -3634,9 +3634,9 @@ impl Niri {
+         }
+     }
+ 
+-    pub fn output_for_touch(&self) -> Option<&Output> {
++    pub fn output_for_touch(&self, name: Option<&str>) -> Option<&Output> {
+         let config = self.config.borrow();
+-        let map_to_output = config.input.touch.map_to_output.as_ref();
++        let map_to_output = config.input.touch_screens.find(name).map_to_output.as_ref();
+         map_to_output
+             .and_then(|name| self.output_by_name_match(name))
+             .or_else(|| self.global_space.outputs().next())

@@ -1,0 +1,68 @@
+From d764096eece701f750f44c1cdf5aa5d52f4f25cf Mon Sep 17 00:00:00 2001
+From: Stefan Boca <stefan.r.boca@gmail.com>
+Date: Thu, 23 Oct 2025 22:03:42 -0700
+Subject: [PATCH 23/31] add TouchScreens struct
+
+- change Default impl on Touch to use DEFAULT_TOUCH for consistency
+---
+ niri-config/src/input.rs | 39 ++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 38 insertions(+), 1 deletion(-)
+
+diff --git a/niri-config/src/input.rs b/niri-config/src/input.rs
+index dceb5c6c..e6242a09 100644
+--- a/niri-config/src/input.rs
++++ b/niri-config/src/input.rs
+@@ -369,8 +369,10 @@ pub struct Tablet {
+     pub left_handed: bool,
+ }
+ 
+-#[derive(knuffel::Decode, Debug, Default, Clone, PartialEq)]
++#[derive(knuffel::Decode, Debug, Clone, PartialEq)]
+ pub struct Touch {
++    #[knuffel(argument)]
++    pub name: Option<String>,
+     #[knuffel(child)]
+     pub off: bool,
+     #[knuffel(child, unwrap(arguments))]
+@@ -379,6 +381,41 @@ pub struct Touch {
+     pub map_to_output: Option<String>,
+ }
+ 
++const DEFAULT_TOUCH: Touch = Touch {
++    name: None,
++    off: false,
++    calibration_matrix: None,
++    map_to_output: None,
++};
++impl Default for Touch {
++    fn default() -> Self {
++        DEFAULT_TOUCH
++    }
++}
++
++#[derive(Debug, Default, PartialEq)]
++pub struct TouchScreens(pub Vec<Touch>);
++
++impl FromIterator<Touch> for TouchScreens {
++    fn from_iter<T: IntoIterator<Item = Touch>>(iter: T) -> Self {
++        Self(Vec::from_iter(iter))
++    }
++}
++
++impl TouchScreens {
++    pub fn find<'a>(&'a self, name: Option<&str>) -> &'a Touch {
++        name.and_then(|name| {
++            self.0.iter().find(|t| {
++                t.name
++                    .as_deref()
++                    .is_some_and(|n| n.eq_ignore_ascii_case(name))
++            })
++        })
++        .or_else(|| self.0.iter().find(|t| t.name.is_none()))
++        .unwrap_or(&DEFAULT_TOUCH)
++    }
++}
++
+ #[derive(knuffel::Decode, Debug, Clone, Copy, PartialEq)]
+ pub struct FocusFollowsMouse {
+     #[knuffel(property, str)]

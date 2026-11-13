@@ -1,0 +1,63 @@
+From 628a8325d1646818c12522f66f955559af55b3c9 Mon Sep 17 00:00:00 2001
+From: Stefan Boca <stefan.r.boca@gmail.com>
+Date: Fri, 24 Oct 2025 10:37:38 -0700
+Subject: [PATCH 28/31] add tests for Tablets
+
+---
+ niri-config/src/input.rs | 43 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+
+diff --git a/niri-config/src/input.rs b/niri-config/src/input.rs
+index cbc8eee8..760a1c08 100644
+--- a/niri-config/src/input.rs
++++ b/niri-config/src/input.rs
+@@ -778,6 +778,49 @@ mod tests {
+         "#);
+     }
+ 
++    #[test]
++    fn parse_tablets_name() {
++        // Test no name and name provided
++        let parsed = do_parse(
++            r#"
++            tablet {
++                map-to-output "eDP-1"
++            }
++
++            tablet "ELAN9009:00 04F3:2F2A Stylus" {
++                map-to-output "DP-1"
++            }
++            "#,
++        );
++
++        assert_debug_snapshot!(parsed.tablets, @r#"
++        Tablets(
++            [
++                Tablet {
++                    name: None,
++                    off: false,
++                    calibration_matrix: None,
++                    map_to_output: Some(
++                        "eDP-1",
++                    ),
++                    left_handed: false,
++                },
++                Tablet {
++                    name: Some(
++                        "ELAN9009:00 04F3:2F2A Stylus",
++                    ),
++                    off: false,
++                    calibration_matrix: None,
++                    map_to_output: Some(
++                        "DP-1",
++                    ),
++                    left_handed: false,
++                },
++            ],
++        )
++        "#);
++    }
++
+     #[test]
+     fn parse_touch_screens_name() {
+         // Test no name and name provided

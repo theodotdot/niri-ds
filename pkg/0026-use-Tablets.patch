@@ -1,0 +1,200 @@
+From f82ab45f67c450a00a9490284ce1c7ea3545cba0 Mon Sep 17 00:00:00 2001
+From: Stefan Boca <stefan.r.boca@gmail.com>
+Date: Fri, 24 Oct 2025 10:15:53 -0700
+Subject: [PATCH 26/31] use Tablets
+
+---
+ niri-config/src/input.rs |  9 +++++----
+ niri-config/src/lib.rs   | 41 +++++++++++++++++++++-----------------
+ src/input/mod.rs         | 43 ++++++++++++++++++++++------------------
+ src/niri.rs              |  9 +++++----
+ 4 files changed, 57 insertions(+), 45 deletions(-)
+
+diff --git a/niri-config/src/input.rs b/niri-config/src/input.rs
+index 5450368e..905b4be5 100644
+--- a/niri-config/src/input.rs
++++ b/niri-config/src/input.rs
+@@ -15,7 +15,7 @@ pub struct Input {
+     pub mouse: Mouse,
+     pub trackpoint: Trackpoint,
+     pub trackball: Trackball,
+-    pub tablet: Tablet,
++    pub tablets: Tablets,
+     pub touch_screens: TouchScreens,
+     pub disable_power_key_handling: bool,
+     pub warp_mouse_to_focus: Option<WarpMouseToFocus>,
+@@ -37,8 +37,8 @@ pub struct InputPart {
+     pub trackpoint: Option<Trackpoint>,
+     #[knuffel(child)]
+     pub trackball: Option<Trackball>,
+-    #[knuffel(child)]
+-    pub tablet: Option<Tablet>,
++    #[knuffel(children(name = "tablet"))]
++    pub tablets: Tablets,
+     #[knuffel(children(name = "touch"))]
+     pub touch_screens: TouchScreens,
+     #[knuffel(child)]
+@@ -64,7 +64,7 @@ impl MergeWith<InputPart> for Input {
+             workspace_auto_back_and_forth,
+         );
+ 
+-        merge_clone!((self, part), touchpad, mouse, trackpoint, trackball, tablet);
++        merge_clone!((self, part), touchpad, mouse, trackpoint, trackball);
+ 
+         merge_clone_opt!(
+             (self, part),
+@@ -74,6 +74,7 @@ impl MergeWith<InputPart> for Input {
+             mod_key_nested,
+         );
+ 
++        self.tablets.0.extend(part.tablets.0.iter().cloned());
+         self.touch_screens
+             .0
+             .extend(part.touch_screens.0.iter().cloned());
+diff --git a/niri-config/src/lib.rs b/niri-config/src/lib.rs
+index 3a528d94..1988150a 100644
+--- a/niri-config/src/lib.rs
++++ b/niri-config/src/lib.rs
+@@ -1253,24 +1253,29 @@ mod tests {
+                     left_handed: true,
+                     middle_emulation: true,
+                 },
+-                tablet: Tablet {
+-                    off: false,
+-                    calibration_matrix: Some(
+-                        [
+-                            1.0,
+-                            2.0,
+-                            3.0,
+-                            4.0,
+-                            5.0,
+-                            6.0,
+-                        ],
+-                    ),
+-                    map_to_output: Some(
+-                        "eDP-1",
+-                    ),
+-                    map_to_focused_output: true,
+-                    left_handed: false,
+-                },
++                tablets: Tablets(
++                    [
++                        Tablet {
++                            name: None,
++                            off: false,
++                            calibration_matrix: Some(
++                                [
++                                    1.0,
++                                    2.0,
++                                    3.0,
++                                    4.0,
++                                    5.0,
++                                    6.0,
++                                ],
++                            ),
++                            map_to_output: Some(
++                                "eDP-1",
++                            ),
++                            map_to_focused_output: true,
++                            left_handed: false,
++                        },
++                    ],
++                ),
+                 touch_screens: TouchScreens(
+                     [
+                         Touch {
+diff --git a/src/input/mod.rs b/src/input/mod.rs
+index aa17a796..a2b1591b 100644
+--- a/src/input/mod.rs
++++ b/src/input/mod.rs
+@@ -353,28 +353,33 @@ impl State {
+     where
+         I::Device: 'static,
+     {
+-        let device_output = event.device().output(self);
++        let device = event.device();
++        let device_output = device.output(self);
+         let device_output = device_output.filter(|output| self.niri.output_exists(output));
+         let device_output = device_output.as_ref();
+-        let (target_geo, keep_ratio, px, transform) =
+-            if let Some(output) = device_output.or_else(|| self.niri.output_for_tablet()) {
+-                (
+-                    self.niri.global_space.output_geometry(output).unwrap(),
+-                    true,
+-                    1. / output.current_scale().fractional_scale(),
+-                    output.current_transform(),
+-                )
+-            } else {
+-                let geo = self.global_bounding_rectangle()?;
++        let data = (&device as &dyn Any)
++            .downcast_ref::<input::Device>()
++            .and_then(|device| self.niri.devices.get(device));
++        let (target_geo, keep_ratio, px, transform) = if let Some(output) =
++            device_output.or_else(|| self.niri.output_for_tablet(data.map(|d| d.name.as_ref())))
++        {
++            (
++                self.niri.global_space.output_geometry(output).unwrap(),
++                true,
++                1. / output.current_scale().fractional_scale(),
++                output.current_transform(),
++            )
++        } else {
++            let geo = self.global_bounding_rectangle()?;
+ 
+-                // FIXME: this 1 px size should ideally somehow be computed for the rightmost output
+-                // corresponding to the position on the right when clamping.
+-                let output = self.niri.global_space.outputs().next().unwrap();
+-                let scale = output.current_scale().fractional_scale();
++            // FIXME: this 1 px size should ideally somehow be computed for the rightmost output
++            // corresponding to the position on the right when clamping.
++            let output = self.niri.global_space.outputs().next().unwrap();
++            let scale = output.current_scale().fractional_scale();
+ 
+-                // Do not keep ratio for the unified mode as this is what OpenTabletDriver expects.
+-                (geo, false, 1. / scale, Transform::Normal)
+-            };
++            // Do not keep ratio for the unified mode as this is what OpenTabletDriver expects.
++            (geo, false, 1. / scale, Transform::Normal)
++        };
+ 
+         let mut pos = {
+             let size = transform.invert().transform_size(target_geo.size);
+@@ -5541,7 +5546,7 @@ pub fn apply_libinput_settings(config: &niri_config::Input, device: &mut input::
+ 
+     let is_tablet = device.has_capability(input::DeviceCapability::TabletTool);
+     if is_tablet {
+-        let c = &config.tablet;
++        let c = config.tablets.find(Some(device.name()));
+         let _ = device.config_send_events_set_mode(if c.off {
+             input::SendEventsMode::DISABLED
+         } else {
+diff --git a/src/niri.rs b/src/niri.rs
+index 82b19fdf..75ba857e 100644
+--- a/src/niri.rs
++++ b/src/niri.rs
+@@ -1517,7 +1517,7 @@ impl State {
+             || config.input.mouse != old_config.input.mouse
+             || config.input.trackball != old_config.input.trackball
+             || config.input.trackpoint != old_config.input.trackpoint
+-            || config.input.tablet != old_config.input.tablet
++            || config.input.tablets != old_config.input.tablets
+             || config.input.touch_screens != old_config.input.touch_screens
+         {
+             libinput_config_changed = true;
+@@ -3624,12 +3624,13 @@ impl Niri {
+             .map(|(_, m)| m.window.clone())
+     }
+ 
+-    pub fn output_for_tablet(&self) -> Option<&Output> {
++    pub fn output_for_tablet(&self, name: Option<&str>) -> Option<&Output> {
+         let config = self.config.borrow();
+-        if config.input.tablet.map_to_focused_output {
++        let tablet = config.input.tablets.find(name);
++        if tablet.map_to_focused_output {
+             self.layout.active_output()
+         } else {
+-            let map_to_output = config.input.tablet.map_to_output.as_ref();
++            let map_to_output = tablet.map_to_output.as_ref();
+             map_to_output.and_then(|name| self.output_by_name_match(name))
+         }
+     }

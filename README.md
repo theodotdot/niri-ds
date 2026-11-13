@@ -8,7 +8,7 @@ part of this patchset — it lives in
 
 
 [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
-[![niri base](https://img.shields.io/badge/niri-v26.04%20%2B%2020%20patches-blueviolet)](#status--credits)
+[![niri base](https://img.shields.io/badge/niri-v26.04%20%2B%2031%20patches-blueviolet)](#status--credits)
 
 ## Gestures
 
@@ -122,7 +122,7 @@ niri has no native touchscreen gestures (see the upstream
 [discussion](https://github.com/niri-wm/niri/discussions/463)). This repo
 maintains a small patch series on top of a current niri release:
 
-- **`pkg/`** - the Arch PKGBUILD plus the 20 patches (`git am`-able, authorship
+- **`pkg/`** - the Arch PKGBUILD plus the 31 patches (`git am`-able, authorship
   preserved) sitting next to it, as makepkg requires: animated multi-finger
   swipes reusing niri's touchpad gesture pipeline, taps and discrete
   flicks at one finger more than the base count (3 or 4), hold-swipes,
@@ -245,7 +245,11 @@ Nothing else is supported: the patchset is developed against this device only.
 
 ## Status & credits
 
-- Patchset: `v26.04 + 20 patches`, unit-tested (full suite runs in CI).
+- Patchset: `v26.04 + 31 patches` — the touchscreen gesture series plus, on
+  top of it, per-device `touch`/`tablet` config with `map-to-output`
+  (niri-wm/niri#1856), no focus change when tapping non-focusable shell layers
+  (#3984), and layer surfaces drawn above the session lock. Unit-tested (full
+  suite runs in CI).
 - One design note for anyone hacking on the gesture code: never run a niri
   action from inside a smithay touch-grab callback (seat touch mutex
   deadlock); actions are deferred via `Niri::pending_touch_action`.
