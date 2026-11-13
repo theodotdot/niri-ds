@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
 pub const SCHEMA: u32 = 2;
-pub const APP: &str = "niri-tablet-easysetup";
+pub const APP: &str = "niri-ds-easysetup";
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Scheme {
@@ -84,7 +84,7 @@ pub fn from_scheme_json(text: &str) -> Result<Imported, String> {
     let scheme: Scheme = serde_json::from_str(text).map_err(|e| format!("not a gesture scheme file: {e}"))?;
     if scheme.schema > SCHEMA {
         return Err(format!(
-            "scheme schema {} is newer than this app understands ({SCHEMA}); update niri-tablet-easysetup",
+            "scheme schema {} is newer than this app understands ({SCHEMA}); update niri-ds-easysetup",
             scheme.schema
         ));
     }
@@ -112,7 +112,7 @@ pub fn from_scheme_json(text: &str) -> Result<Imported, String> {
 }
 
 /// Import a raw KDL file: either a full gestures file (with the `gestures`
-/// node) or the same content niri-tablet ships.
+/// node) or the same content niri-ds ships.
 pub fn from_kdl_text(text: &str) -> Result<GestureModel, String> {
     match GestureModel::parse_file_text(text)? {
         Some(m) => Ok(m),

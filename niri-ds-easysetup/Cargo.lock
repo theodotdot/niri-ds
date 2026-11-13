@@ -454,7 +454,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "niri-tablet-easysetup"
+name = "niri-ds-easysetup"
 version = "0.1.0"
 dependencies = [
  "gtk4",

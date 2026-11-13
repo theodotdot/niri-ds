@@ -151,7 +151,7 @@ fn validate_rendered(text: &str, niri: Option<&Path>) -> Result<(), SaveError> {
         return Ok(());
     };
     let probe = std::env::temp_dir().join(format!(
-        "niri-tablet-easysetup-save-{}.kdl",
+        "niri-ds-easysetup-save-{}.kdl",
         std::process::id()
     ));
     let write = std::fs::File::create(&probe).and_then(|mut f| f.write_all(text.as_bytes()));

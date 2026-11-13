@@ -37,7 +37,7 @@ impl AppState {
 
 pub fn run() {
     let app = adw::Application::builder()
-        .application_id("com.github.ggezus.NiriTabletEasySetup")
+        .application_id("com.github.theodotdot.NiriDsEasySetup")
         .build();
     app.connect_activate(|app| {
         window::build(app);

@@ -1,9 +1,9 @@
 [package]
-name = "niri-tablet-easysetup"
+name = "niri-ds-easysetup"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.85"
-description = "Friendly GUI configurator for niri-tablet touchscreen gestures"
+description = "Friendly GUI configurator for niri-ds touchscreen gestures"
 license = "GPL-3.0-or-later"
 publish = false
 

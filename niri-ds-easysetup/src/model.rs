@@ -586,7 +586,7 @@ impl GestureModel {
     /// Full managed file text, header comment included.
     pub fn to_file_text(&self) -> String {
         let mut out = String::from(
-            "// Managed by niri-tablet-easysetup. Edits here are overwritten when\n\
+            "// Managed by niri-ds-easysetup. Edits here are overwritten when\n\
              // you save from the app; keep custom nodes out of it or import them\n\
              // back. niri reloads this file live (no re-login needed).\n",
         );
@@ -654,7 +654,7 @@ fn slot_node(value: &ActionValue) -> Option<Node> {
     }
 }
 
-/// The gesture scheme niri-tablet ships. Embedded straight from the repo's
+/// The gesture scheme niri-ds ships. Embedded straight from the repo's
 /// config/gestures.kdl (single source of truth): first-run setup seeds a new
 /// gestures file from it and "reset to defaults" re-imports it. Only the
 /// `gestures` node is used; surrounding comments in that file are not.

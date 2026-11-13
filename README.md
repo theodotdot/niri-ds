@@ -44,7 +44,7 @@ swipes and the 3-finger tap do anything (the compiled defaults); everything
 else above comes from the config file, which is the point of shipping it.
 And touchpad behavior is untouched.
 
-Prefer picking actions over editing KDL? `niri-tablet-easysetup/` in the
+Prefer picking actions over editing KDL? `niri-ds-easysetup/` in the
 repo is a small GTK app that does exactly that: it loads your current
 scheme, offers installed apps and niri actions for every gesture, fires
 test runs through `niri msg`, and saves only what `niri validate`
@@ -232,7 +232,7 @@ implements — and bind its `Exec` to a gesture or a key.
 pkg/       Arch PKGBUILD + the patch series against upstream niri
 update-niri-ds.sh   user-facing updater (install/update/pin)
 config/    example niri config fragments
-niri-tablet-easysetup/   GUI gesture configurator (GTK4)
+niri-ds-easysetup/   GUI gesture configurator (GTK4)
 test.kdl   minimal config for nested (in-window) testing
 niri/      maintainer's dev clone for rebasing (not part of the repo)
 ```

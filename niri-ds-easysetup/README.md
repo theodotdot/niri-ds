@@ -1,4 +1,4 @@
-# niri-tablet-easysetup
+# niri-ds-easysetup
 
 Friendly GUI configurator for [niri-ds](https://github.com/theodotdot/niri-ds)
 touchscreen gestures: pick what each tap, flick, hold-swipe, and edge or
@@ -14,14 +14,14 @@ System deps: `gtk4`, `libadwaita`, Rust 1.85+.
 
 ```bash
 cargo build --release
-./target/release/niri-tablet-easysetup
+./target/release/niri-ds-easysetup
 ```
 
 `--check` prints a headless report (niri support, managed file, current
 scheme as JSON).
 
 `data/` holds the desktop entry and icon for app launchers;
-`update-niri-tablet.sh` installs both for you. The icon is niri's logo,
+`update-niri-ds.sh` installs both for you. The icon is niri's logo,
 [CC BY-SA 4.0](https://github.com/niri-wm/niri/wiki/Name-and-Logo).
 
 License: GPL-3.0-only (the icon file is CC BY-SA 4.0).

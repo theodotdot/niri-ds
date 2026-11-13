@@ -158,9 +158,9 @@ pub fn event_stream(niri: &Path) -> Option<ReloadWatch> {
 }
 
 /// True when the installed niri understands the `gestures {}` config node
-/// (i.e. it's the patched niri-tablet build).
+/// (i.e. it's the patched niri-ds build).
 pub fn gestures_supported(niri: &Path) -> (bool, String) {
-    let probe = std::env::temp_dir().join("niri-tablet-easysetup-probe.kdl");
+    let probe = std::env::temp_dir().join("niri-ds-easysetup-probe.kdl");
     let body = "gestures {\n    touchscreen-swipe {\n        tap { maximize-column; }\n    }\n}\n";
     let write = std::fs::File::create(&probe)
         .and_then(|mut f| f.write_all(body.as_bytes()));

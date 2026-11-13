@@ -308,9 +308,9 @@ fn build_menu_actions(win: &adw::ApplicationWindow, menu_btn: &gtk::MenuButton, 
     let about = gio::SimpleAction::new("about", None);
     about.connect_activate(move |_, _| {
         let d = adw::AboutWindow::builder()
-            .application_name("niri-tablet-easysetup")
+            .application_name("niri-ds-easysetup")
             .version(env!("CARGO_PKG_VERSION"))
-            .comments("Friendly configurator for niri-tablet touchscreen gestures")
+            .comments("Friendly configurator for niri-ds touchscreen gestures")
             .website("https://github.com/theodotdot/niri-ds")
             .license_type(gtk::License::Gpl30)
             .build();
@@ -796,7 +796,7 @@ fn refresh_banners(state: &SharedState, ui: &SharedUi) {
     } else if !s.niri_supports_gestures {
         let state = state.clone();
         let b = banner(
-            "This niri does not support the gestures config. Is the patched niri-tablet installed?",
+            "This niri does not support the gestures config. Is the patched niri-ds installed?",
             Some("Re-check"),
             Some(Box::new({
                 let state = state.clone();

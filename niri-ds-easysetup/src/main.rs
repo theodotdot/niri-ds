@@ -9,9 +9,9 @@ mod store;
 mod ui;
 
 const HELP: &str = "\
-niri-tablet-easysetup - friendly GUI configurator for niri-tablet gestures
+niri-ds-easysetup - friendly GUI configurator for niri-ds gestures
 
-Usage: niri-tablet-easysetup [OPTION]
+Usage: niri-ds-easysetup [OPTION]
 
 Options:
   (no option)    open the GUI
@@ -23,7 +23,7 @@ Options:
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.iter().any(|a| a == "--version") {
-        println!("niri-tablet-easysetup {}", env!("CARGO_PKG_VERSION"));
+        println!("niri-ds-easysetup {}", env!("CARGO_PKG_VERSION"));
         return;
     }
     if args.iter().any(|a| a == "--check") {

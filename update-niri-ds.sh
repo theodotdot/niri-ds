@@ -15,7 +15,7 @@
 #
 # After installing, it also checks ~/.config/niri for nodes the new build
 # rejects (the v26.04.20 gesture rename) and offers to migrate them, and
-# rebuilds niri-tablet-easysetup (the GUI configurator) when its sources
+# rebuilds niri-ds-easysetup (the GUI configurator) when its sources
 # changed — a plain cargo build, no sudo. It also installs the app's
 # launcher entry (niri logo icon) and a ~/.local/bin symlink, so the GUI
 # shows up in app launchers by itself.
@@ -108,12 +108,12 @@ check_config_rename() {
         CFG_MIGRATE=0
         if [ "$ASSUME_YES" = 1 ] || [ ! -t 0 ]; then
             warn "not renaming anything without a prompt (--yes); edit the files above,"
-            say "      or open niri-tablet-easysetup and save, before your next login"
+            say "      or open niri-ds-easysetup and save, before your next login"
         else
             printf '  %s' "rename them now? (per-file .bak backup; undone if niri validate complains) [Y/n] "
             read -r CFG_REPLY || CFG_REPLY=n
             case $CFG_REPLY in
-                n*|N*) say "  Leaving the old names $DIM(niri-tablet-easysetup renames them on save too)$N" ;;
+                n*|N*) say "  Leaving the old names $DIM(niri-ds-easysetup renames them on save too)$N" ;;
                 *) CFG_MIGRATE=1 ;;
             esac
         fi
@@ -143,7 +143,7 @@ check_config_rename() {
                     done
                     warn "niri validate rejected the result; the files were restored unchanged"
                     printf '%s\n' "$CFG_ERR" | sed 's/^/    /'
-                    say "    $DIM(fix the error above, or open niri-tablet-easysetup and save)$N"
+                    say "    $DIM(fix the error above, or open niri-ds-easysetup and save)$N"
                 fi
             else
                 say "    $DIM(no config.kdl found to validate; run niri validate yourself before login)$N"
@@ -160,34 +160,34 @@ check_config_rename() {
             done
         done
         say "      Set it to 3 or 4 by hand, then re-run me (the rename is offered again);"
-        say "      niri-tablet-easysetup resets it on save"
+        say "      niri-ds-easysetup resets it on save"
     fi
 }
 
-# ── niri-tablet-easysetup (the GUI configurator) ───────────────────
+# ── niri-ds-easysetup (the GUI configurator) ───────────────────
 # Not part of the package: rebuild it whenever its sources are newer
 # than the binary (or there is no binary yet), so updates keep the GUI
 # current without anyone remembering to run cargo by hand. No-op when
 # already current (cargo's own staleness check is cheap).
 build_easysetup() {
-    ES_DIR=$ROOT/niri-tablet-easysetup
+    ES_DIR=$ROOT/niri-ds-easysetup
     [ -f "$ES_DIR/Cargo.toml" ] || return 0
-    ES_BIN=$ES_DIR/target/release/niri-tablet-easysetup
+    ES_BIN=$ES_DIR/target/release/niri-ds-easysetup
     if ! [ -x "$ES_BIN" ] ||
        [ -n "$(find "$ES_DIR/src" "$ES_DIR/Cargo.toml" "$ES_DIR/Cargo.lock" \
               -newer "$ES_BIN" -print -quit 2>/dev/null)" ]; then
         if command -v cargo >/dev/null 2>&1; then
-            hdr "building niri-tablet-easysetup (the gesture GUI)"
+            hdr "building niri-ds-easysetup (the gesture GUI)"
             say "  $DIM(a plain cargo build, no sudo; the first build takes a couple of minutes)$N"
             if cargo build --release --manifest-path "$ES_DIR/Cargo.toml"; then
-                ok "niri-tablet-easysetup built: $ES_BIN"
+                ok "niri-ds-easysetup built: $ES_BIN"
             else
                 warn "the easysetup build failed — the niri package above is unaffected; retry with"
-                say "      $DIM(cargo build --release --manifest-path niri-tablet-easysetup/Cargo.toml)$N"
+                say "      $DIM(cargo build --release --manifest-path niri-ds-easysetup/Cargo.toml)$N"
             fi
         else
-            warn "cargo not found — skipped niri-tablet-easysetup (the gesture GUI)"
-            say "      $DIM(build it later: cargo build --release --manifest-path niri-tablet-easysetup/Cargo.toml)$N"
+            warn "cargo not found — skipped niri-ds-easysetup (the gesture GUI)"
+            say "      $DIM(build it later: cargo build --release --manifest-path niri-ds-easysetup/Cargo.toml)$N"
         fi
     fi
 
@@ -195,29 +195,29 @@ build_easysetup() {
     # user-local, no sudo. Runs on every invocation so first installs and
     # already-up-to-date runs get it too.
     ES_DATA=$ES_DIR/data
-    ES_DESKTOP=$ES_DATA/com.github.ggezus.NiriTabletEasySetup.desktop
-    ES_ICON=$ES_DATA/icons/hicolor/scalable/apps/com.github.ggezus.NiriTabletEasySetup.svg
+    ES_DESKTOP=$ES_DATA/com.github.theodotdot.NiriDsEasySetup.desktop
+    ES_ICON=$ES_DATA/icons/hicolor/scalable/apps/com.github.theodotdot.NiriDsEasySetup.svg
     XDG_DATA=${XDG_DATA_HOME:-$HOME/.local/share}
     # The installed entry gets ABSOLUTE Exec/TryExec paths. Launchers are
     # often started by the systemd user manager, whose PATH has no
-    # ~/.local/bin: bare names resolve as dead there (Surface bug,
+    # ~/.local/bin: bare names resolve as dead there (launcher PATH bug,
     # 2026-09-23). The repo file keeps bare names; only the installed
     # copy is rewritten.
     if [ -x "$ES_BIN" ] && [ -f "$ES_DESKTOP" ] && [ -f "$ES_ICON" ] &&
        mkdir -p "$HOME/.local/bin" &&
-       ln -sfn "$ES_BIN" "$HOME/.local/bin/niri-tablet-easysetup" &&
+       ln -sfn "$ES_BIN" "$HOME/.local/bin/niri-ds-easysetup" &&
        mkdir -p "$XDG_DATA/applications" &&
-       sed -e "s|^Exec=niri-tablet-easysetup\$|Exec=$HOME/.local/bin/niri-tablet-easysetup|" \
-           -e "s|^TryExec=niri-tablet-easysetup\$|TryExec=$HOME/.local/bin/niri-tablet-easysetup|" \
-           "$ES_DESKTOP" > "$XDG_DATA/applications/com.github.ggezus.NiriTabletEasySetup.desktop" &&
-       install -Dm644 "$ES_ICON" "$XDG_DATA/icons/hicolor/scalable/apps/com.github.ggezus.NiriTabletEasySetup.svg"; then
+       sed -e "s|^Exec=niri-ds-easysetup\$|Exec=$HOME/.local/bin/niri-ds-easysetup|" \
+           -e "s|^TryExec=niri-ds-easysetup\$|TryExec=$HOME/.local/bin/niri-ds-easysetup|" \
+           "$ES_DESKTOP" > "$XDG_DATA/applications/com.github.theodotdot.NiriDsEasySetup.desktop" &&
+       install -Dm644 "$ES_ICON" "$XDG_DATA/icons/hicolor/scalable/apps/com.github.theodotdot.NiriDsEasySetup.svg"; then
         ok "EasySetup launcher entry installed (niri logo icon): $XDG_DATA/applications"
         case ":$PATH:" in
             *":$HOME/.local/bin:"*) ;;
             *) say "    $DIM(launcher entry uses absolute paths; re-login once to also launch by name in a shell)$N" ;;
         esac
     else
-        warn "could not install the EasySetup launcher entry — see the EasySetup wiki page for the manual steps"
+        warn "could not install the EasySetup launcher entry — see niri-ds-easysetup/README.md for the manual steps"
     fi
 }
 
