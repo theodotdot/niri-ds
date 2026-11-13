@@ -10,7 +10,7 @@ cd "$(dirname -- "$0")/niri"
 
 git fetch https://github.com/niri-wm/niri '+refs/tags/*:refs/tags/*'
 LATEST=$(git tag -l 'v*' --sort=-v:refname | grep -v -- '-' | head -1)
-BASE=$(git describe --tags --abbrev=0)
+BASE=$(git describe --tags --abbrev=0 --match 'v*')
 echo "patchset base: $BASE  ->  latest upstream: $LATEST"
 
 if [ "$BASE" != "$LATEST" ]; then

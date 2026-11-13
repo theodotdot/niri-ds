@@ -7,12 +7,12 @@
 set -euo pipefail
 cd "$(dirname -- "$0")"
 
-BASE=$(git -C niri describe --tags --abbrev=0)
-PKGVER=$(git -C niri describe --tags --long | sed 's/^v//;s/-/./g')
+BASE=$(git -C niri describe --tags --abbrev=0 --match 'v*')
+PKGVER=$(git -C niri describe --tags --long --match 'v*' | sed 's/^v//;s/-/./g')
 echo "regen: base $BASE, pkgver $PKGVER"
 
 rm -f pkg/*.patch
-git -C niri format-patch "$BASE..gestures" -o "$(pwd)/pkg/" >/dev/null
+git -C niri format-patch "$BASE..gestures" --no-signature -o "$(pwd)/pkg/" >/dev/null
 
 shopt -s nullglob
 NL=$'\n'
