@@ -8,7 +8,7 @@ configurable action instead of driving the workspace carousel:
 
     touchscreen-swipe {
         swipe-4-down { close-window; }
-        swipe-4-up   { spawn-sh "wvkbd-deskintl -H 260"; }
+        swipe-4-up   { spawn-sh "plasma-keyboard-custom"; }
     }
 
 The action fires when the fingers lift; the grab swallows events for

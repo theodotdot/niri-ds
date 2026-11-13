@@ -1,6 +1,6 @@
 # niri-tablet-easysetup
 
-Friendly GUI configurator for [niri-tablet](https://github.com/GGEZUS/niri-tablet)
+Friendly GUI configurator for [niri-ds](https://github.com/theodotdot/niri-ds)
 touchscreen gestures: pick what each tap, flick, hold-swipe, and edge or
 corner swipe does, without hand-editing KDL.
 
@@ -18,7 +18,7 @@ cargo build --release
 ```
 
 `--check` prints a headless report (niri support, managed file, current
-scheme as JSON). Docs: the [EasySetup wiki page](https://github.com/GGEZUS/niri-tablet/wiki/EasySetup).
+scheme as JSON).
 
 `data/` holds the desktop entry and icon for app launchers;
 `update-niri-tablet.sh` installs both for you. The icon is niri's logo,

@@ -683,7 +683,7 @@ mod tests {
             m.get(Slot::SwipeMoreUp),
             &ActionValue::simple("fullscreen-window")
         );
-        assert_eq!(m.get(Slot::EdgeBottom), &ActionValue::spawn_sh("~/.local/bin/niri-osk.sh"));
+        assert_eq!(m.get(Slot::EdgeBottom), &ActionValue::None);
         assert_eq!(m.get(Slot::CornerTopLeft), &ActionValue::None);
         // The horizontal flicks ship unbound; only the examples are commented
         // in the shipped config.
@@ -722,7 +722,7 @@ mod tests {
         tap          { maximize-column; }
         tap-4        { spawn-sh "noctalia msg panel-toggle launcher"; }
         swipe-4-down { close-window; }
-        swipe-4-up   { spawn-sh "~/.local/bin/niri-osk.sh"; }
+        swipe-4-up   { spawn-sh "plasma-keyboard-custom"; }
         hold {
             left { move-column-left; }
             right { move-column-right; }
@@ -731,7 +731,7 @@ mod tests {
         }
     }
     touchscreen-edge-swipe {
-        bottom { spawn-sh "~/.local/bin/niri-osk.sh"; }
+        bottom { spawn-sh "plasma-keyboard-custom"; }
         top { toggle-overview; }
         left { focus-column-left; }
         right { focus-column-right; }

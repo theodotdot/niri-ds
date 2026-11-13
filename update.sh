@@ -1,10 +1,10 @@
 #!/bin/sh
 # Rebase the touch-gesture patchset onto the latest upstream niri release,
-# regenerate the patch series, and rebuild the niri-tablet package.
+# regenerate the patch series, and rebuild the niri-ds package.
 # Maintainer script (needs the dev clone in niri/). Works from any cwd.
 #
 # After it finishes:
-#   sudo pacman -U pkg/niri-tablet-*.pkg.tar.zst     # then log out/in
+#   sudo pacman -U pkg/niri-ds-*.pkg.tar.zst     # then log out/in
 set -eu
 cd "$(dirname -- "$0")/niri"
 
@@ -25,4 +25,4 @@ cd pkg
 # No -f: reuse src/ and the shared cargo cache for incremental rebuilds.
 makepkg
 echo
-echo "done — install with: sudo pacman -U niri-tablet-*.pkg.tar.zst   (then log out/in)"
+echo "done — install with: sudo pacman -U niri-ds-*.pkg.tar.zst   (then log out/in)"

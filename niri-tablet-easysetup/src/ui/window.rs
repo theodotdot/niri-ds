@@ -311,7 +311,7 @@ fn build_menu_actions(win: &adw::ApplicationWindow, menu_btn: &gtk::MenuButton, 
             .application_name("niri-tablet-easysetup")
             .version(env!("CARGO_PKG_VERSION"))
             .comments("Friendly configurator for niri-tablet touchscreen gestures")
-            .website("https://github.com/GGEZUS/niri-tablet")
+            .website("https://github.com/theodotdot/niri-ds")
             .license_type(gtk::License::Gpl30)
             .build();
         d.present();

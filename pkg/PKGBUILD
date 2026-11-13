@@ -1,4 +1,4 @@
-# niri-tablet — niri with the touchscreen gesture patchset.
+# niri-ds — niri with the multi-touchscreen gesture patchset.
 #
 # Builds from the upstream niri release + the patch series sitting next to
 # this file (makepkg requires local sources flat in the PKGBUILD dir).
@@ -7,20 +7,20 @@
 #
 # NB: makepkg's exported flags are deliberately unset in build() — with
 # rustc's default lld they break linking of the libspa static C shim.
-pkgname=niri-tablet
+pkgname=niri-ds
 pkgver=26.04.20.gef77de00
 pkgrel=3
-pkgdesc='A scrollable-tiling Wayland compositor, with touchscreen gestures'
-url='https://github.com/GGEZUS/niri-tablet'
+pkgdesc='A scrollable-tiling Wayland compositor, with multi-touchscreen gestures'
+url='https://github.com/theodotdot/niri-ds'
 arch=('x86_64' 'aarch64')
 license=('GPL-3.0-only')
-install=niri-tablet.install
+install=niri-ds.install
 depends=('cairo' 'glib2' 'glibc' 'libdisplay-info' 'libgcc' 'libinput' 'libpipewire'
          'libxkbcommon' 'mesa' 'pango' 'pixman' 'seatd' 'systemd-libs'
          'xdg-desktop-portal-impl')
 makedepends=('cargo' 'rust' 'clang' 'git')
-provides=('niri')
-conflicts=('niri')
+provides=('niri' 'niri-tablet' 'niri-thor')
+conflicts=('niri' 'niri-tablet' 'niri-thor')
 _tag=v26.04  # upstream release the patchset is rebased onto
 source=(
     "git+https://github.com/niri-wm/niri#tag=${_tag}"

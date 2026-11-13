@@ -1,17 +1,17 @@
 #!/bin/sh
-# update-niri-tablet.sh — the user-facing updater for the niri-tablet package.
+# update-niri-ds.sh — the user-facing updater for the niri-ds package.
 #
 # Fetches the latest release tag from GitHub, shows what changed since the
 # installed version, builds the package with makepkg, installs it, and pins
 # stock niri in /etc/pacman.conf (IgnorePkg) if that pin is missing. Works
 # for first installs too. Run it from anywhere inside your clone:
 #
-#   ./update-niri-tablet.sh              update to the latest release
-#   ./update-niri-tablet.sh --check      report only, build nothing
-#   ./update-niri-tablet.sh --force      rebuild even when up to date
-#   ./update-niri-tablet.sh --tag v26.04.11   install a specific release
-#   ./update-niri-tablet.sh --main       track the repo's main branch
-#   ./update-niri-tablet.sh --yes        no prompts (needs stdin TTY otherwise)
+#   ./update-niri-ds.sh              update to the latest release
+#   ./update-niri-ds.sh --check      report only, build nothing
+#   ./update-niri-ds.sh --force      rebuild even when up to date
+#   ./update-niri-ds.sh --tag v26.04.11   install a specific release
+#   ./update-niri-ds.sh --main       track the repo's main branch
+#   ./update-niri-ds.sh --yes        no prompts (needs stdin TTY otherwise)
 #
 # After installing, it also checks ~/.config/niri for nodes the new build
 # rejects (the v26.04.20 gesture rename) and offers to migrate them, and
@@ -224,7 +224,7 @@ build_easysetup() {
 # ── preflight ──────────────────────────────────────────────────────
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$ROOT"
-[ -f pkg/PKGBUILD ] || die "pkg/PKGBUILD not found — run me from a niri-tablet clone"
+[ -f pkg/PKGBUILD ] || die "pkg/PKGBUILD not found — run me from a niri-ds clone"
 command -v git     >/dev/null 2>&1 || die "git not found"
 command -v makepkg >/dev/null 2>&1 || die "makepkg not found — install base-devel first (pacman -S base-devel)"
 command -v pacman  >/dev/null 2>&1 || die "pacman not found — this updater is Arch-only"
@@ -234,7 +234,7 @@ case " $* " in
     *' -h '*|*' --help '*) usage; exit 0 ;;
 esac
 
-hdr "niri-tablet updater"
+hdr "niri-ds updater"
 
 git fetch origin --tags --quiet ||
     die "git fetch failed — check your network and the clone's origin remote"
@@ -248,15 +248,15 @@ git fetch origin --tags --quiet ||
 # intentionally differs from origin/main (e.g. maintainer edits).
 # This runs before the arg loop on purpose: re-exec needs "$@" still
 # holding the original command line.
-if [ "${NIRI_TABLET_UPDATER_SELF:-}" != 1 ]; then
-    UPD_SELF=$(git hash-object -- "$ROOT/update-niri-tablet.sh")
-    UPD_MAIN=$(git rev-parse -q --verify 'origin/main:update-niri-tablet.sh' 2>/dev/null || true)
+if [ "${NIRI_DS_UPDATER_SELF:-}" != 1 ]; then
+    UPD_SELF=$(git hash-object -- "$ROOT/update-niri-ds.sh")
+    UPD_MAIN=$(git rev-parse -q --verify 'origin/main:update-niri-ds.sh' 2>/dev/null || true)
     if [ -n "$UPD_MAIN" ] && [ "$UPD_SELF" != "$UPD_MAIN" ]; then
         if git checkout -q main 2>/dev/null ||
            git checkout -q -b main --track origin/main 2>/dev/null; then
             git pull --ff-only --quiet 2>/dev/null || true
             say "  ${DIM}refreshed the updater from origin/main$N"
-            NIRI_TABLET_UPDATER_SELF=1 exec "$ROOT/update-niri-tablet.sh" "$@"
+            NIRI_DS_UPDATER_SELF=1 exec "$ROOT/update-niri-ds.sh" "$@"
         fi
         say "  ${DIM}could not refresh the updater (local changes?) — continuing with this copy$N"
     fi
@@ -295,7 +295,8 @@ fi
 
 # ── versions ───────────────────────────────────────────────────────
 BASE_TAG=$(sed -n 's/^_tag=\(v[^[:space:]]*\).*/\1/p' pkg/PKGBUILD)
-INSTALLED=$(pacman -Q niri-tablet 2>/dev/null || true)
+INSTALLED=$(pacman -Q niri-ds 2>/dev/null || pacman -Q niri-thor 2>/dev/null ||
+    pacman -Q niri-tablet 2>/dev/null || true)
 # pacman -Q niri resolves to whichever package provides it — only flag a
 # literal stock-niri install (the fresh-migration case).
 NIRI_PROVIDER=$(pacman -Qq niri 2>/dev/null || true)
@@ -339,7 +340,7 @@ fi
 # ── status / exit paths ────────────────────────────────────────────
 say ""
 if [ -z "$INSTALLED" ]; then
-    warn "niri-tablet is not installed — this will be a fresh install"
+    warn "niri-ds is not installed — this will be a fresh install"
 elif [ "$UP_TO_DATE" = 1 ]; then
     if [ "$FORCE" = 1 ]; then
         warn "already up to date — rebuilding anyway (--force)"
@@ -385,32 +386,50 @@ else
 fi
 
 # ── build + install ────────────────────────────────────────────────
-hdr "building niri-tablet $TARGET"
+hdr "building niri-ds $TARGET"
 say "  $DIM(first build takes a while; later builds reuse ~/.cache/niri-tablet-target)$N"
 cd pkg
 makepkg -si || die "makepkg failed — read the output above; missing deps are installed by -s"
 
-NEW_VER=$(pacman -Q niri-tablet 2>/dev/null | awk '{print $2}')
-[ -n "$NEW_VER" ] && ok "installed: niri-tablet $NEW_VER"
+NEW_VER=$(pacman -Q niri-ds 2>/dev/null | awk '{print $2}')
+[ -n "$NEW_VER" ] && ok "installed: niri-ds $NEW_VER"
 
 # ── keep stock niri pinned ─────────────────────────────────────────
 cd "$ROOT"
-if ! grep -E '^[[:space:]]*IgnorePkg([[:space:]]|=)' /etc/pacman.conf | grep -qw niri; then
-    warn "/etc/pacman.conf does not pin niri — the next pacman -Syu swaps back to stock niri"
+# Both names must be pinned: literal "niri" keeps stock niri out, "niri-ds"
+# keeps the fork itself out of repo upgrades. Tokens are compared exactly —
+# "niri" is a substring of "niri-ds", so grep -w would lie.
+PACMAN_CONF=/etc/pacman.conf
+ignore_pins() {
+    sed -n 's/^[[:space:]]*IgnorePkg[[:space:]]*=[[:space:]]*//p' "$PACMAN_CONF" | head -1
+}
+ignore_pins_has() {
+    ignore_pins | tr ' ' '\n' | grep -qx "$1"
+}
+if ! ignore_pins_has niri || ! ignore_pins_has niri-ds; then
+    warn "/etc/pacman.conf does not pin niri + niri-ds — the next pacman -Syu swaps back to stock niri"
     FIX=0
     if [ "$ASSUME_YES" = 1 ]; then FIX=1; else
-        printf '  %s' "add IgnorePkg = niri now? [Y/n] "
+        printf '  %s' "add IgnorePkg = niri niri-ds now? [Y/n] "
         read -r FIXREPLY || FIXREPLY=n
         case $FIXREPLY in n*|N*) FIX=0 ;; *) FIX=1 ;; esac
     fi
     if [ "$FIX" = 1 ]; then
-        sudo cp /etc/pacman.conf /etc/pacman.conf.bak-niri-tablet
-        if grep -qE '^[[:space:]]*IgnorePkg([[:space:]]|=)' /etc/pacman.conf; then
-            sudo sed -i 's/^\([[:space:]]*IgnorePkg[[:space:]]*=[[:space:]]*.*\)$/\1 niri/' /etc/pacman.conf
+        sudo cp "$PACMAN_CONF" "$PACMAN_CONF.bak-niri-ds"
+        # Drop existing niri/niri-ds tokens, keep every other pin, then add both.
+        KEEP=""
+        for word in $(ignore_pins); do
+            case $word in
+                niri|niri-ds) ;;
+                *) KEEP="$KEEP $word" ;;
+            esac
+        done
+        if grep -qE '^[[:space:]]*IgnorePkg[[:space:]]*=' "$PACMAN_CONF"; then
+            sudo sed -i "s|^[[:space:]]*IgnorePkg[[:space:]]*=.*|IgnorePkg =${KEEP} niri niri-ds|" "$PACMAN_CONF"
         else
-            printf '\nIgnorePkg = niri\n' | sudo tee -a /etc/pacman.conf >/dev/null
+            printf '\nIgnorePkg = niri niri-ds\n' | sudo tee -a "$PACMAN_CONF" >/dev/null
         fi
-        ok "niri pinned $DIM(backup: /etc/pacman.conf.bak-niri-tablet)$N"
+        ok "niri + niri-ds pinned $DIM(backup: $PACMAN_CONF.bak-niri-ds)$N"
     fi
 fi
 

@@ -1,4 +1,4 @@
-# niri-tablet install scriptlet — the one thing users must not miss:
+# niri-ds install scriptlet — the one thing users must not miss:
 # without IgnorePkg, the next -Syu swaps back to stock niri, silently.
 # The pin check is live, so already-pinned upgrades stay quiet.
 
@@ -9,7 +9,7 @@ ignorepkg_niri_is_set() {
 post_install() {
     cat <<'EOF'
 
-==> niri-tablet replaces stock niri.
+==> niri-ds replaces stock niri.
 
 EOF
     if ! ignorepkg_niri_is_set; then
@@ -28,7 +28,7 @@ EOF
 post_upgrade() {
     cat <<'EOF'
 
-==> niri-tablet updated. Log out/in (or reboot) to start the new build.
+==> niri-ds updated. Log out/in (or reboot) to start the new build.
 EOF
     if ! ignorepkg_niri_is_set; then
         cat <<'EOF'

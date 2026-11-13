@@ -548,7 +548,7 @@ gestures {
         }
     }
     touchscreen-edge-swipe {
-        bottom { spawn-sh "~/.local/bin/niri-osk.sh"; }
+        bottom { spawn-sh "plasma-keyboard-custom"; }
     }
 }
 "#;
@@ -569,7 +569,7 @@ gestures {
         let bottom = edge.find("bottom").unwrap();
         assert_eq!(
             bottom.children[0].args[0],
-            Arg::Str("~/.local/bin/niri-osk.sh".into())
+            Arg::Str("plasma-keyboard-custom".into())
         );
     }
 

@@ -1,4 +1,4 @@
-// Touchscreen gestures for the niri-tablet patchset.
+// Touchscreen gestures for the niri-ds patchset.
 //
 // Include from your main config:   include "~/.config/niri/cfg/gestures.kdl"
 // (or paste the gestures block straight into config.kdl). This is the
@@ -63,7 +63,6 @@ gestures {
     // swipe-driven panel (e.g. a notification pull-down): it would fire
     // mid-drag.
     touchscreen-edge-swipe {
-        bottom { spawn-sh "~/.local/bin/niri-osk.sh"; }
         top { toggle-overview; }
         left { focus-column-left; }
         right { focus-column-right; }
@@ -80,16 +79,3 @@ gestures {
     // }
 }
 
-// Using wvkbd as the OSK with a non-US system layout? A two-group xkb layout
-// lets the OSK type US while the physical keyboard stays native, and
-// niri-osk.sh flips the active group on toggle. This belongs in your INPUT
-// config (config.kdl or its input include), not in this file - and the
-// layout node lives under xkb:
-//
-//     input {
-//         keyboard {
-//             xkb {
-//                 layout "pt,us"   // your layout first, us second
-//             }
-//         }
-//     }

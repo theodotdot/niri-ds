@@ -57,7 +57,7 @@ index 2d10729e..0d298feb 100644
 +fires. A second finger landing cancels the gesture.
 +
 +The zones follow the output the touch lands on, including its transform, so edges stay in
-+the visual orientation on rotated tablets and per-output on multi-monitor setups.
++the visual orientation on rotated outputs and per-output on multi-monitor setups.
 +
 +Zones left unbound are inert. Avoid binding edges occupied by swipe-driven shell surfaces
 +(e.g. a pull-down notification panel along the top): the bound gesture would fire mid-drag.
